@@ -1,0 +1,145 @@
+{
+  "model_type": "BiTCN",
+  "input_features": 43,
+  "feature_names": [
+    "Age",
+    "BusinessTravel",
+    "DailyRate",
+    "DistanceFromHome",
+    "Education",
+    "EnvironmentSatisfaction",
+    "Gender",
+    "HourlyRate",
+    "JobInvolvement",
+    "JobLevel",
+    "JobSatisfaction",
+    "MonthlyIncome",
+    "MonthlyRate",
+    "NumCompaniesWorked",
+    "OverTime",
+    "PercentSalaryHike",
+    "PerformanceRating",
+    "RelationshipSatisfaction",
+    "StockOptionLevel",
+    "TotalWorkingYears",
+    "TrainingTimesLastYear",
+    "WorkLifeBalance",
+    "YearsAtCompany",
+    "YearsInCurrentRole",
+    "YearsSinceLastPromotion",
+    "YearsWithCurrManager",
+    "Department_Research & Development",
+    "Department_Sales",
+    "EducationField_Life Sciences",
+    "EducationField_Marketing",
+    "EducationField_Medical",
+    "EducationField_Other",
+    "EducationField_Technical Degree",
+    "JobRole_Human Resources",
+    "JobRole_Laboratory Technician",
+    "JobRole_Manager",
+    "JobRole_Manufacturing Director",
+    "JobRole_Research Director",
+    "JobRole_Research Scientist",
+    "JobRole_Sales Executive",
+    "JobRole_Sales Representative",
+    "MaritalStatus_Married",
+    "MaritalStatus_Single"
+  ],
+  "architecture": {
+    "layer1": {
+      "filters": 32,
+      "kernel_size": 3,
+      "dilation": 1
+    },
+    "layer2": {
+      "filters": 64,
+      "kernel_size": 5,
+      "dilation": 2
+    },
+    "fc_layers": [
+      128,
+      64,
+      1
+    ],
+    "dropout": 0.5,
+    "l2_lambda": 1e-05
+  },
+  "training_config": {
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "loss": "BCEWithLogitsLoss",
+    "batch_size": 128,
+    "epochs": 50,
+    "n_splits": 5,
+    "augmentation": "GAN",
+    "gan_target_per_class": 1500
+  },
+  "cv_results": {
+    "fold_scores": {
+      "accuracy": [
+        0.826530612244898,
+        0.8571428571428571,
+        0.8571428571428571,
+        0.8197278911564626,
+        0.826530612244898
+      ],
+      "precision": [
+        0.4482758620689655,
+        0.6071428571428571,
+        0.6190476190476191,
+        0.425,
+        0.4375
+      ],
+      "recall": [
+        0.2708333333333333,
+        0.3541666666666667,
+        0.2765957446808511,
+        0.3617021276595745,
+        0.2978723404255319
+      ],
+      "f1": [
+        0.33766233766233766,
+        0.4473684210526316,
+        0.38235294117647056,
+        0.39080459770114945,
+        0.35443037974683544
+      ],
+      "auc": [
+        0.7483062330623307,
+        0.7163787262872628,
+        0.7474373331036266,
+        0.7215953139805323,
+        0.6607804289775174
+      ]
+    },
+    "mean_metrics": {
+      "accuracy": 0.8374149659863945,
+      "precision": 0.5073932676518883,
+      "recall": 0.3122340425531915,
+      "f1": 0.38252373546788493,
+      "auc": 0.718899607082254
+    },
+    "std_metrics": {
+      "accuracy": 0.018221898280243325,
+      "precision": 0.09693459373398142,
+      "recall": 0.042999424113245074,
+      "f1": 0.04205715381281144,
+      "auc": 0.035604114921021134
+    },
+    "overall_metrics": {
+      "accuracy": 0.8374149659863945,
+      "precision": 0.49333333333333335,
+      "recall": 0.31223628691983124,
+      "f1": 0.38242894056847543,
+      "auc": 0.7125480372731596
+    }
+  },
+  "model_checkpoints": [
+    "..\\results\\models\\bitcn_fold_1_best.pt",
+    "..\\results\\models\\bitcn_fold_2_best.pt",
+    "..\\results\\models\\bitcn_fold_3_best.pt",
+    "..\\results\\models\\bitcn_fold_4_best.pt",
+    "..\\results\\models\\bitcn_fold_5_best.pt"
+  ]
+}
