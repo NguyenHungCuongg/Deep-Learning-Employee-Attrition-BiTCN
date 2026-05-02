@@ -1,0 +1,97 @@
+
+================================================================================
+BI-TCN MODEL TRAINING AND EVALUATION REPORT
+================================================================================
+
+PROJECT: Employee Attrition Prediction using Bidirectional Temporal Convolutional Network
+DATASET: IBM HR Analytics Employee Attrition
+DATE: 2026-05-02 17:27:26
+
+================================================================================
+MODEL ARCHITECTURE
+================================================================================
+- Model Type: Bi-TCN (Bidirectional Temporal Convolutional Network)
+- Input Features: 43
+- Layer 1: 32 filters, kernel size = 3, dilation = 1
+- Layer 2: 64 filters, kernel size = 5, dilation = 2
+- FC Layers: 128 → 64 → 1 (sigmoid output)
+- Dropout Rate: 0.5
+- Batch Normalization: Yes (after FC layer)
+- L2 Regularization: λ = 0.001
+
+================================================================================
+TRAINING CONFIGURATION
+================================================================================
+- Cross-Validation: 5-Fold Stratified
+- Data Augmentation: GAN-based (per fold, training only)
+- Target samples per class: 1500
+- Optimizer: Adam
+- Learning Rate: 0.0005
+- Loss Function: Binary Crossentropy with Logits
+- Batch Size: 128
+- Epochs: 50
+- Device: cpu
+
+================================================================================
+CROSS-VALIDATION RESULTS (Per Fold)
+================================================================================
+ Fold  accuracy  precision   recall       f1      auc
+    1  0.816327   0.448276 0.541667 0.490566 0.801914
+    2  0.877551   0.750000 0.375000 0.500000 0.833418
+    3  0.870748   0.615385 0.510638 0.558140 0.796106
+    4  0.874150   0.647059 0.468085 0.543210 0.808080
+    5  0.853741   0.550000 0.468085 0.505747 0.764493
+
+================================================================================
+MEAN METRICS ACROSS ALL FOLDS
+================================================================================
+ACCURACY       : 0.8585 ± 0.0253
+PRECISION      : 0.6021 ± 0.1123
+RECALL         : 0.4727 ± 0.0628
+F1             : 0.5195 ± 0.0294
+AUC            : 0.8008 ± 0.0248
+
+================================================================================
+AGGREGATED TEST SET PERFORMANCE
+================================================================================
+ACCURACY       : 0.8585
+PRECISION      : 0.5744
+RECALL         : 0.4726
+F1             : 0.5185
+AUC            : 0.7989
+
+================================================================================
+OUTPUT FILES
+================================================================================
+Models (saved):
+  Fold 1: ..\results\models\bitcn_fold_1_best.pt
+  Fold 2: ..\results\models\bitcn_fold_2_best.pt
+  Fold 3: ..\results\models\bitcn_fold_3_best.pt
+  Fold 4: ..\results\models\bitcn_fold_4_best.pt
+  Fold 5: ..\results\models\bitcn_fold_5_best.pt
+
+Metrics (CSV):
+  - ..\results\metrics\bitcn_cv_fold_metrics.csv
+
+Metrics (JSON):
+  - ..\results\metrics\bitcn_overall_metrics.json
+
+Predictions:
+  - ..\results\bitcn_predictions_full_dataset.csv
+
+Plots:
+  - ..\results\plots\bitcn_metrics_per_fold.png
+  - ..\results\plots\bitcn_roc_curve.png
+  - ..\results\plots\bitcn_overall_metrics_bar.png
+  - ..\results\plots\bitcn_mean_metrics_with_std.png
+  - ..\results\plots\bitcn_train_val_loss_per_fold.png
+
+================================================================================
+KEY FINDINGS
+================================================================================
+- Best Fold Performance: Fold 2 (AUC: 0.8334)
+- Worst Fold Performance: Fold 5 (AUC: 0.7645)
+- Mean Accuracy: 0.8585
+- Mean AUC: 0.8008
+
+================================================================================
