@@ -5,7 +5,7 @@ BI-TCN MODEL TRAINING AND EVALUATION REPORT
 
 PROJECT: Employee Attrition Prediction using Bidirectional Temporal Convolutional Network
 DATASET: IBM HR Analytics Employee Attrition
-DATE: 2026-05-17 19:49:59
+DATE: 2026-05-18 23:26:56
 
 ================================================================================
 MODEL ARCHITECTURE
@@ -26,7 +26,7 @@ TRAINING CONFIGURATION
 - Data Augmentation: GAN-based (per fold, training only)
 - Target samples per class: 1500
 - Optimizer: Adam
-- Learning Rate: 0.0005
+- Learning Rate: 0.0001
 - Loss Function: Binary Crossentropy with Logits
 - Batch Size: 128
 - Epochs: 50
@@ -36,29 +36,29 @@ TRAINING CONFIGURATION
 CROSS-VALIDATION RESULTS (Per Fold)
 ================================================================================
  Fold  accuracy  precision   recall       f1      auc  Threshold
-    1  0.846939   0.588235 0.208333 0.307692 0.748645       0.60
-    2  0.836735   0.500000 0.041667 0.076923 0.787771       0.55
-    3  0.843537   1.000000 0.021277 0.041667 0.776467       0.55
-    4  0.857143   0.727273 0.170213 0.275862 0.768886       0.60
-    5  0.870748   0.800000 0.255319 0.387097 0.755104       0.65
+    1  0.823129   0.433333 0.270833 0.333333 0.745512       0.50
+    2  0.853741   0.692308 0.187500 0.295082 0.798865       0.59
+    3  0.860544   0.666667 0.255319 0.369231 0.817814       0.77
+    4  0.877551   0.641026 0.531915 0.581395 0.825222       0.55
+    5  0.857143   0.666667 0.212766 0.322581 0.771901       0.57
 
 ================================================================================
 MEAN METRICS ACROSS ALL FOLDS
 ================================================================================
-ACCURACY       : 0.8510 ± 0.0133
-PRECISION      : 0.7231 ± 0.1940
-RECALL         : 0.1394 ± 0.1033
-F1             : 0.2178 ± 0.1508
-AUC            : 0.7674 ± 0.0158
+ACCURACY       : 0.8544 ± 0.0197
+PRECISION      : 0.6200 ± 0.1059
+RECALL         : 0.2917 ± 0.1383
+F1             : 0.3803 ± 0.1155
+AUC            : 0.7919 ± 0.0331
 
 ================================================================================
 AGGREGATED TEST SET PERFORMANCE
 ================================================================================
-ACCURACY       : 0.8510
-PRECISION      : 0.6800
-RECALL         : 0.1435
-F1             : 0.2369
-AUC            : 0.7533
+ACCURACY       : 0.8537
+PRECISION      : 0.5948
+RECALL         : 0.2911
+F1             : 0.3909
+AUC            : 0.7832
 
 ================================================================================
 OUTPUT FILES
@@ -89,9 +89,9 @@ Plots:
 ================================================================================
 KEY FINDINGS
 ================================================================================
-- Best Fold Performance: Fold 2 (AUC: 0.7878)
-- Worst Fold Performance: Fold 1 (AUC: 0.7486)
-- Mean Accuracy: 0.8510
-- Mean AUC: 0.7674
+- Best Fold Performance: Fold 4 (AUC: 0.8252)
+- Worst Fold Performance: Fold 1 (AUC: 0.7455)
+- Mean Accuracy: 0.8544
+- Mean AUC: 0.7919
 
 ================================================================================
