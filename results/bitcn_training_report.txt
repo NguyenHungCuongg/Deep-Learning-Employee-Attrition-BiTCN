@@ -5,7 +5,7 @@ BI-TCN MODEL TRAINING AND EVALUATION REPORT
 
 PROJECT: Employee Attrition Prediction using Bidirectional Temporal Convolutional Network
 DATASET: IBM HR Analytics Employee Attrition
-DATE: 2026-05-18 23:26:56
+DATE: 2026-05-19 20:57:06
 
 ================================================================================
 MODEL ARCHITECTURE
