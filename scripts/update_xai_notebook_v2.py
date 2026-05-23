@@ -21,16 +21,41 @@ def set_cell_source(cell: dict, new_text: str) -> None:
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:
     if old not in text:
-        raise ValueError(f"Could not find '{label}' in target cell")
+        raise ValueError(f"Could not find {label} in target cell")
     return text.replace(old, new, 1)
 
 
+def patch_intro_markdown(text: str) -> str:
+    text = text.replace(
+        "Notebook này cung cấp model explainability cho Bi-TCN attrition prediction model sử dụng SHAP (SHapley Additive exPlanations).",
+        "Notebook này cung cấp model explainability cho Bi-TCN attrition prediction model đã được bổ sung Attention Layer, sử dụng SHAP (SHapley Additive exPlanations).",
+    )
+    text = text.replace(
+        "   1. Load trained Bi-TCN model và preprocessed data.",
+        "   1. Load trained Bi-TCN model có Attention và preprocessed data.",
+    )
+    return text
+
+
+def patch_import_cell(text: str) -> str:
+    if "import json" in text:
+        return text
+    old = """import warnings
+"""
+    new = """import warnings
+import json
+"""
+    return replace_once(text, old, new, "json import")
+
+
 def patch_model_cell(text: str) -> str:
-    if "class AttentionLayer(nn.Module):" not in text:
-        old = """return x
+    if "class AttentionLayer(nn.Module):" in text:
+        return text
+
+    old = """return x
 
 class BiTCN(nn.Module):"""
-        new = """return x
+    new = """return x
 
 class AttentionLayer(nn.Module):
     def __init__(self, channels, reduction=4, dropout=0.2):
@@ -51,7 +76,7 @@ class AttentionLayer(nn.Module):
         return x * weights
 
 class BiTCN(nn.Module):"""
-        text = replace_once(text, old, new, "AttentionLayer insertion")
+    text = replace_once(text, old, new, "AttentionLayer insertion")
 
     if "self.attention = AttentionLayer(" not in text:
         old = """        self.branch1 = BiTCNBranch(in_channels=1, out_channels=16, kernel_size=3, dilations=(1, 2, 4), dropout=0.5)
@@ -78,42 +103,15 @@ class BiTCN(nn.Module):"""
     return text
 
 
-def patch_intro_markdown(text: str) -> str:
-        "   1. Load trained Bi-TCN model có Attention và preprocessed data.",
-DATA_PATH = Path(\"../data/processed/IBM_Cleaned.csv\")
-    if "MODEL_INFO_PATH" in text and "ShapBiTCN" in text:
+def patch_load_data_cell(text: str) -> str:
+    if "ShapBiTCN" in text:
         return text
 
-    old = """# Paths
-DATA_PATH = Path("../data/processed/IBM_Cleaned.csv")
-MODEL_PATH = Path("../results/models/bitcn_fold_1_best.pt")
-MODEL_INFO_PATH = Path("../results/models/model_info.json")
+    start = text.find("# Paths")
+    if start == -1:
+        raise ValueError("Could not find load data cell in target cell")
 
-# Load model metadata to recover the exact feature set used during training
-with open(MODEL_INFO_PATH, "r", encoding="utf-8") as f:
-    model_info = json.load(f)
-feature_names = model_info["feature_names"]
-
-# Load data
-df = pd.read_csv(DATA_PATH)
-target_col = "Attrition"
-id_cols = [c for c in df.columns if c.lower() in {"employee id", "employeeid", "employee_number"} or c.lower().endswith("id")]
-X = df.drop(columns=[target_col] + id_cols, errors="ignore")
-X = X.reindex(columns=feature_names, fill_value=0)
-y = df[target_col].astype(int)
-
-print(f"Data loaded: {X.shape}")
-print(f"Checkpoint expects: {len(feature_names)} features")
-
-# Initialize model and load weights
-model = BiTCN(input_dim=X.shape[1], num_features=X.shape[1])
-model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
-model.to(DEVICE)
-model.eval()
-print("Model loaded and set to eval mode")
-"""
-
-    new = """# Paths
+    new_tail = """# Paths
 DATA_PATH = Path("../data/processed/IBM_Cleaned.csv")
 MODEL_PATH = Path("../results/models/bitcn_fold_1_best.pt")
 MODEL_INFO_PATH = Path("../results/models/model_info.json")
@@ -251,31 +249,7 @@ model.eval()
 print("Model loaded and set to eval mode")
 """
 
-    return replace_once(text, old, new, "load data cell")
-        new = """# Paths
-DATA_PATH = Path(\"../data/processed/IBM_Cleaned.csv\")
-MODEL_PATH = Path(\"../results/models/bitcn_fold_1_best.pt\")
-MODEL_INFO_PATH = Path(\"../results/models/model_info.json\")
-
-# Load model metadata to recover the exact feature set used during training
-with open(MODEL_INFO_PATH, \"r\", encoding=\"utf-8\") as f:
-    model_info = json.load(f)
-feature_names = model_info[\"feature_names\"]
-
-# Load data
-df = pd.read_csv(DATA_PATH)
-target_col = \"Attrition\"
-id_cols = [c for c in df.columns if c.lower() in {\"employee id\", \"employeeid\", \"employee_number\"} or c.lower().endswith(\"id\")]
-X = df.drop(columns=[target_col] + id_cols, errors=\"ignore\")
-X = X.reindex(columns=feature_names, fill_value=0)
-y = df[target_col].astype(int)
-
-print(f\"Data loaded: {X.shape}\")
-print(f\"Checkpoint expects: {len(feature_names)} features\")
-"""
-        return replace_once(text, old, new, "load data cell")
-
-    return text
+    return text[:start] + new_tail
 
 
 def patch_notebook(notebook_path: Path) -> list[str]:
