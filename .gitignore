@@ -1,4 +1,3 @@
-.github/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -7,6 +6,5 @@ venv/
 env/
 .DS_Store
 Thumbs.db
-guides/
 tmp/
 patch_notebook.py
