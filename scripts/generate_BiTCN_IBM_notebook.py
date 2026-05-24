@@ -149,7 +149,7 @@ cells = [
             n_splits: int = 5
             target_col: str = "Attrition"
             # Run all candidates, then select the best augmentation by mean CV F1.
-            augmentation_candidates: tuple[str, ...] = ("SMOTE", "RandomOverSampling", "ADASYN", "RAW")
+            augmentation_candidates: tuple[str, ...] = ("GAN", "SMOTE", "RandomOverSampling", "ADASYN", "RAW")
             batch_size: int = 32
             epochs: int = 160
             patience: int = 28
@@ -169,6 +169,12 @@ cells = [
             use_amp: bool = True
             use_focal_loss: bool = False
             focal_gamma: float = 2.0
+            gan_latent_dim: int = 32
+            gan_hidden_dim: int = 128
+            gan_epochs: int = 600
+            gan_batch_size: int = 32
+            gan_lr: float = 2e-4
+            gan_weight_decay: float = 1e-5
 
         CFG = Config()
 
@@ -239,6 +245,124 @@ cells = [
     markdown("## 4. Cross-Validation Helpers and Augmentation"),
     code(
         """
+        class TabularGenerator(nn.Module):
+            def __init__(self, latent_dim: int, output_dim: int, hidden_dim: int):
+                super().__init__()
+                self.net = nn.Sequential(
+                    nn.Linear(latent_dim, hidden_dim),
+                    nn.BatchNorm1d(hidden_dim),
+                    nn.LeakyReLU(0.2),
+                    nn.Linear(hidden_dim, hidden_dim),
+                    nn.BatchNorm1d(hidden_dim),
+                    nn.LeakyReLU(0.2),
+                    nn.Linear(hidden_dim, output_dim),
+                    nn.Sigmoid(),
+                )
+
+            def forward(self, z):
+                return self.net(z)
+
+
+        class TabularDiscriminator(nn.Module):
+            def __init__(self, input_dim: int, hidden_dim: int):
+                super().__init__()
+                self.net = nn.Sequential(
+                    nn.Linear(input_dim, hidden_dim),
+                    nn.LeakyReLU(0.2),
+                    nn.Dropout(0.25),
+                    nn.Linear(hidden_dim, hidden_dim // 2),
+                    nn.LeakyReLU(0.2),
+                    nn.Dropout(0.25),
+                    nn.Linear(hidden_dim // 2, 1),
+                )
+
+            def forward(self, x):
+                return self.net(x)
+
+
+        def gan_augment_minority(X_train_2d: np.ndarray, y_train: np.ndarray, fold: int):
+            class_counts = dict(zip(*np.unique(y_train, return_counts=True)))
+            minority_class = min(class_counts, key=class_counts.get)
+            majority_class = max(class_counts, key=class_counts.get)
+            n_to_generate = class_counts[majority_class] - class_counts[minority_class]
+
+            if n_to_generate <= 0:
+                print("GAN skipped because classes are already balanced:", class_counts)
+                return X_train_2d, y_train
+
+            seed_everything(CFG.seed + 10_000 + fold)
+            real_minority = X_train_2d[y_train == minority_class].astype("float32")
+            feature_dim = real_minority.shape[1]
+
+            generator = TabularGenerator(CFG.gan_latent_dim, feature_dim, CFG.gan_hidden_dim).to(DEVICE)
+            discriminator = TabularDiscriminator(feature_dim, CFG.gan_hidden_dim).to(DEVICE)
+            opt_g = torch.optim.AdamW(generator.parameters(), lr=CFG.gan_lr, betas=(0.5, 0.999), weight_decay=CFG.gan_weight_decay)
+            opt_d = torch.optim.AdamW(discriminator.parameters(), lr=CFG.gan_lr, betas=(0.5, 0.999), weight_decay=CFG.gan_weight_decay)
+            criterion = nn.BCEWithLogitsLoss()
+
+            minority_loader = DataLoader(
+                TensorDataset(torch.tensor(real_minority, dtype=torch.float32)),
+                batch_size=min(CFG.gan_batch_size, len(real_minority)),
+                shuffle=True,
+                drop_last=False,
+            )
+
+            generator.train()
+            discriminator.train()
+            for epoch in range(1, CFG.gan_epochs + 1):
+                d_losses, g_losses = [], []
+                for (real_batch,) in minority_loader:
+                    real_batch = real_batch.to(DEVICE)
+                    batch_size = real_batch.size(0)
+
+                    real_targets = torch.empty(batch_size, 1, device=DEVICE).uniform_(0.85, 1.0)
+                    fake_targets = torch.empty(batch_size, 1, device=DEVICE).uniform_(0.0, 0.15)
+
+                    z = torch.randn(batch_size, CFG.gan_latent_dim, device=DEVICE)
+                    fake_batch = generator(z).detach()
+                    real_batch_noisy = torch.clamp(real_batch + 0.01 * torch.randn_like(real_batch), 0.0, 1.0)
+
+                    opt_d.zero_grad(set_to_none=True)
+                    d_real = criterion(discriminator(real_batch_noisy), real_targets)
+                    d_fake = criterion(discriminator(fake_batch), fake_targets)
+                    d_loss = d_real + d_fake
+                    d_loss.backward()
+                    opt_d.step()
+
+                    z = torch.randn(batch_size, CFG.gan_latent_dim, device=DEVICE)
+                    opt_g.zero_grad(set_to_none=True)
+                    generated = generator(z)
+                    g_loss = criterion(discriminator(generated), torch.ones(batch_size, 1, device=DEVICE))
+                    g_loss.backward()
+                    opt_g.step()
+
+                    d_losses.append(float(d_loss.detach().cpu()))
+                    g_losses.append(float(g_loss.detach().cpu()))
+
+                if epoch in {1, CFG.gan_epochs} or epoch % 100 == 0:
+                    print(f"GAN fold {fold} epoch {epoch:03d}/{CFG.gan_epochs} | D={np.mean(d_losses):.4f} | G={np.mean(g_losses):.4f}")
+
+            generator.eval()
+            generated_batches = []
+            remaining = n_to_generate
+            with torch.no_grad():
+                while remaining > 0:
+                    current = min(CFG.gan_batch_size, remaining)
+                    z = torch.randn(current, CFG.gan_latent_dim, device=DEVICE)
+                    generated_batches.append(generator(z).cpu().numpy())
+                    remaining -= current
+
+            X_generated = np.vstack(generated_batches).astype("float32")
+            X_generated = np.clip(X_generated, 0.0, 1.0)
+            y_generated = np.full(n_to_generate, minority_class, dtype=int)
+
+            X_aug = np.vstack([X_train_2d, X_generated]).astype("float32")
+            y_aug = np.concatenate([y_train, y_generated]).astype(int)
+            order = np.random.default_rng(CFG.seed + fold).permutation(len(y_aug))
+            print("GAN training distribution:", dict(zip(*np.unique(y_aug, return_counts=True))))
+            return X_aug[order], y_aug[order]
+
+
         def make_sampler(name: str, seed: int):
             name = name.lower()
             if name in {"raw", "none", "no"}:
@@ -255,6 +379,9 @@ cells = [
             raise ValueError(f"Unknown augmentation: {name}")
 
         def augment_training_data(X_train_2d: np.ndarray, y_train: np.ndarray, fold: int, augmentation: str):
+            if augmentation.lower() == "gan":
+                return gan_augment_minority(X_train_2d, y_train, fold)
+
             sampler = make_sampler(augmentation, CFG.seed + fold)
             if sampler is None:
                 print("Training distribution without augmentation:", dict(zip(*np.unique(y_train, return_counts=True))))
