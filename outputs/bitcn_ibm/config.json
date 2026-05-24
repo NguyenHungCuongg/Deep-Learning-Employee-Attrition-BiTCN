@@ -1,0 +1,30 @@
+{
+  "seed": 42,
+  "n_splits": 5,
+  "target_col": "Attrition",
+  "augmentation_candidates": [
+    "SMOTE",
+    "RandomOverSampling",
+    "ADASYN",
+    "RAW"
+  ],
+  "batch_size": 32,
+  "epochs": 160,
+  "patience": 28,
+  "lr": 0.0007,
+  "weight_decay": 5e-05,
+  "input_noise_std": 0.015,
+  "dropout": 0.4,
+  "stem_channels": 16,
+  "filters_1": 32,
+  "filters_2": 64,
+  "hidden_dim": 96,
+  "attention_reduction": 8,
+  "label_smoothing": 0.0,
+  "num_workers": 0,
+  "threshold_metric": "f1",
+  "selection_metric": "f1",
+  "use_amp": true,
+  "use_focal_loss": false,
+  "focal_gamma": 2.0
+}

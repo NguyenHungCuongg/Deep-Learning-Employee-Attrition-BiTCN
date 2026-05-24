@@ -1,0 +1,8 @@
+              precision    recall  f1-score   support
+
+No Attrition       0.92      0.97      0.94       247
+   Attrition       0.77      0.57      0.66        47
+
+    accuracy                           0.90       294
+   macro avg       0.85      0.77      0.80       294
+weighted avg       0.90      0.90      0.90       294
