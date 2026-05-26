@@ -8,3 +8,5 @@ env/
 Thumbs.db
 tmp/
 patch_notebook.py
+.github
+guides/
