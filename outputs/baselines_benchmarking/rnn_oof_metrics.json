@@ -1,0 +1,13 @@
+{
+  "accuracy": 0.8231292517006803,
+  "precision": 0.4612794612794613,
+  "recall": 0.5780590717299579,
+  "f1": 0.5131086142322098,
+  "roc_auc": 0.7661940791387342,
+  "pr_auc": 0.419179941377122,
+  "threshold": 0.6017298102378845,
+  "model": "RNN",
+  "augmentation": "RandomOverSampling",
+  "threshold_score": 0.513108614231716,
+  "mean_fold_threshold": 0.6172868013381958
+}

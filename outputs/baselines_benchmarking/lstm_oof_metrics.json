@@ -1,0 +1,13 @@
+{
+  "accuracy": 0.7129251700680272,
+  "precision": 0.27710843373493976,
+  "recall": 0.48523206751054854,
+  "f1": 0.35276073619631904,
+  "roc_auc": 0.6472566995527358,
+  "pr_auc": 0.3080818550748585,
+  "threshold": 0.5776366591453552,
+  "model": "LSTM",
+  "augmentation": "RandomOverSampling",
+  "threshold_score": 0.35276073619585635,
+  "mean_fold_threshold": 0.5847407579421997
+}
